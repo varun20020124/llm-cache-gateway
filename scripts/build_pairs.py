@@ -24,6 +24,12 @@ N_UNRELATED = 80
 
 COMPANIES = ["Apple", "Microsoft", "Nvidia"]
 YEARS = ["FY2022", "FY2023", "FY2024"]
+# Ways a user might write the same fiscal year.
+YEAR_FORMATS = {
+    "FY2022": ["FY2022", "fiscal 2022", "fiscal year 2022", "FY 2022"],
+    "FY2023": ["FY2023", "fiscal 2023", "fiscal year 2023", "FY 2023"],
+    "FY2024": ["FY2024", "fiscal 2024", "fiscal year 2024", "FY 2024"],
+}
 
 # Each metric maps to phrasings that ask for the SAME number.
 METRICS = {
@@ -91,7 +97,8 @@ def make_pair(pair_id, q1, q2, label, bucket, perturbed=None, meta=None):
 
 
 def build_paraphrases(rng, n):
-    """Same (company, year, metric); two different phrasings."""
+    """Same (company, year, metric); different phrasing, sometimes
+    a different way of writing the year."""
     candidates = []
     for company, year, metric in product(COMPANIES, YEARS, METRIC_KEYS):
         n_templates = len(METRICS[metric])
@@ -101,14 +108,23 @@ def build_paraphrases(rng, n):
     rng.shuffle(candidates)
     pairs = []
     for k, (company, year, metric, i, j) in enumerate(candidates[:n], start=1):
+        # Half the pairs also vary how the year is written.
+        if k % 2 == 0:
+            fmt1, fmt2 = rng.sample(YEAR_FORMATS[year], 2)
+            year_variant = "format"
+        else:
+            fmt1 = fmt2 = year
+            year_variant = "identical"
+
         pairs.append(
             make_pair(
                 f"p{k:03d}",
-                render(company, year, metric, i),
-                render(company, year, metric, j),
+                render(company, fmt1, metric, i),
+                render(company, fmt2, metric, j),
                 label="same",
                 bucket="paraphrase",
-                meta={"company": company, "year": year, "metric": metric},
+                meta={"company": company, "year": year, "metric": metric,
+                      "year_variant": year_variant},
             )
         )
     return pairs

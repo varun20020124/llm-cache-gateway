@@ -29,3 +29,8 @@ def test_blocks_when_one_query_has_no_year():
         "What was Apple's revenue in FY2023?",
         "What was Apple's revenue?",
     )
+
+def test_extracts_all_year_formats():
+    for text in ["FY2023", "FY 2023", "fiscal 2023", "fiscal year 2023"]:
+        q = f"What was Apple's revenue in {text}?"
+        assert extract_year(q) == 2023, f"failed on: {text}"

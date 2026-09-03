@@ -12,3 +12,4 @@ llm_cache_gateway.egg-info/SOURCES.txt
 llm_cache_gateway.egg-info/dependency_links.txt
 llm_cache_gateway.egg-info/requires.txt
 llm_cache_gateway.egg-info/top_level.txt
+tests/test_invalidation.py

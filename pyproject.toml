@@ -8,6 +8,8 @@ dependencies = [
     "pandas",
     "matplotlib",
     "python-dotenv",
+    "fastapi",
+    "uvicorn",
 ]
 
 [build-system]

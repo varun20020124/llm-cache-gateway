@@ -26,6 +26,8 @@ The cause: changing the fiscal year in a question makes it *more* similar to the
 "What was Nvidia's gross margin in FY2022?"     similarity: 0.9884
 ```
 
+![Similarity distributions](docs/similarity_distributions.png)
+
 100% of year swaps leaked through at 0.90. Company swaps: 0%. The embedding model handles entity and topic changes correctly and is blind to temporal qualifiers.
 
 Full analysis: [`results/FINDINGS.md`](results/FINDINGS.md)
@@ -35,6 +37,8 @@ Full analysis: [`results/FINDINGS.md`](results/FINDINGS.md)
 A deterministic check extracts fiscal year and company from both queries and forces a cache miss when either differs, regardless of embedding similarity. Layered over the similarity match, not replacing it.
 
 Zero over-blocking on legitimate paraphrases, including pairs that write the year differently on each side (`FY2023` / `fiscal 2023` / `fiscal year 2023`).
+
+![False-hit tradeoff](docs/false_hit_tradeoff.png)
 
 ## Usage
 

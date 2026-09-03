@@ -30,7 +30,7 @@ The cause: changing the fiscal year in a question makes it *more* similar to the
 
 100% of year swaps leaked through at 0.90. Company swaps: 0%. The embedding model handles entity and topic changes correctly and is blind to temporal qualifiers.
 
-Full analysis: [`results/FINDINGS.md`](results/FINDINGS.md)
+Full analysis: [`FINDINGS.md`](FINDINGS.md)
 
 ## The fix
 
@@ -45,7 +45,7 @@ Zero over-blocking on legitimate paraphrases, including pairs that write the yea
 Start the gateway:
 
 ```bash
-uvicorn app:app --reload
+python -m uvicorn app:app --reload
 ```
 
 Point any OpenAI client at it:
@@ -82,15 +82,17 @@ python scripts/build_pairs.py         # regenerate the 300-pair labeled set
 python scripts/embed_pairs.py         # compute pairwise similarities
 python scripts/run_sweep.py           # baseline threshold sweep
 python scripts/run_guarded_sweep.py   # sweep with entity-aware invalidation
+python scripts/plot_results.py        # regenerate figures
 pytest tests/
 ```
 
-Embeddings are cached to disk keyed by SHA-256 of model and text, so only the first run makes API calls. Total cost is under one cent.
+Generated results are written to `results/`, which is not tracked in git — run the scripts above to reproduce them. Embeddings are cached to disk keyed by SHA-256 of model and text, so only the first run makes API calls. Total cost is under one cent.
 
 ## Layout
 
 ```
 app.py                      FastAPI proxy
+FINDINGS.md                 full analysis
 cache/
   embeddings.py             embedding + cosine similarity, disk-cached
   store.py                  the cache itself
@@ -103,8 +105,11 @@ scripts/
   embed_pairs.py            compute similarities
   run_sweep.py              baseline sweep
   run_guarded_sweep.py      guarded sweep
-results/
-  FINDINGS.md               full analysis
+  plot_results.py           figures
+tests/
+  test_invalidation.py      entity extraction and blocking rules
+docs/                       generated figures
+data/                       labeled pairs, embedding cache
 ```
 
 ## Limitations
@@ -112,3 +117,7 @@ results/
 The metric-swap pairs in the benchmark are easier than intended — "total revenue" and "diluted earnings per share" are lexically distant enough that embeddings separate them without difficulty. A harder version would pair lexically similar but numerically distinct metrics (gross margin vs. operating margin, total assets vs. total liabilities). The residual 5% false-hit rate is entirely metric confusion.
 
 The entity check is domain-specific: it knows about fiscal years and three company names. Generalizing it would mean either a broader extraction layer or an LLM-based field extractor, which trades latency for coverage.
+
+The gateway guarantees you get the answer to the question you asked, not that the answer is correct. In testing, `gpt-4o-mini` returned Apple's FY2022 revenue figure when asked about FY2023 — a model error, independent of and unaddressed by caching.
+
+Lookup is a linear scan over cached entries. At benchmark scale this is not a bottleneck, and the project's claim is about correctness rather than throughput. A production deployment would want an approximate nearest-neighbour index.
